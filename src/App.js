@@ -1,24 +1,47 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useEffect, useState } from 'react';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import SendNotiFicationPage from './components/send-noti';
+import ReceiveNotiFicationPage from './components/receive-noti';
+import { addNotification, onNotificationsSnapshot } from './firebase/firebase';
 
 function App() {
+  const [notifications, setNotifications] = useState([]);
+
+  useEffect(() => {
+    const unsubscribe = onNotificationsSnapshot((newNotifications) => {
+      setNotifications(newNotifications);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleSendNotification = async (notificationContent) => {
+    const notification = {
+      body: notificationContent,
+      timestamp: new Date(),
+    };
+
+    await addNotification(notification);
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route
+          exact
+          path="/"
+          element={
+            <SendNotiFicationPage
+              handleSendNotification={handleSendNotification}
+            />
+          }
+        />
+        <Route
+          path="/receive"
+          element={<ReceiveNotiFicationPage notifications={notifications} />}
+        />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
